@@ -125,7 +125,13 @@ class ProjectList {
     this.HTMLElement.id = `${this.type}-projects`;
 
     projectState.addListener((projects: Project[]) => {
-      this.assignedProjects = projects;
+      const relevantProjects = projects.filter(project => {
+        if(this.type === 'active') {
+          return project.status === ProjectStatus.Active;
+        }
+        return project.status === ProjectStatus.Finished;
+      });
+      this.assignedProjects = relevantProjects;
       this.renderProjects();
     });
 
@@ -148,15 +154,12 @@ class ProjectList {
 
   private renderProjects() {
     const listElement = document.getElementById(`${this.type}-projects-list`);
-    while (listElement?.firstChild) {
-      listElement.removeChild(listElement.firstChild);
-    }
+    listElement!.innerHTML = '';
+
     for (const project of this.assignedProjects) {
-      if(this.type.toUpperCase() === ProjectStatus[project.status].toUpperCase()) {
-        const listItem = document.createElement("li");
-        listItem.textContent = project.title;
-        listElement?.appendChild(listItem);
-      }
+      const listItem = document.createElement("li");
+      listItem.textContent = project.title;
+      listElement?.appendChild(listItem);
     }
   }
 }
