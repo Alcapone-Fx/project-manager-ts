@@ -1,3 +1,50 @@
+interface Project{
+    id: string;
+    title: string;
+    description: string;
+    people: number;
+}
+
+// Project State Management 
+
+class ProjectState {
+  private listeners: Function[] = [];
+  private projects: Project[] = [];
+  private static instance: ProjectState;
+
+  private constructor() {
+
+  }
+
+  static getInstance() {
+    if(this.instance) {
+      return this.instance;
+    }
+    this.instance = new ProjectState();
+    return this.instance;
+  }
+
+  addProject(title: string, description: string, numOfPeople: number) {
+    const newProject: Project = {
+      id: Math.random().toString(),
+      title,
+      description,
+      people: numOfPeople
+    }
+    this.projects.push(newProject);
+    for (const listener of this.listeners) {
+      listener(this.projects.slice());
+    }
+  }
+
+  addListener(listenerFunction: Function) {
+    this.listeners.push(listenerFunction);
+  }
+}
+
+// global instant
+const projectState = ProjectState.getInstance();
+
 // Validation
 interface Validatable {
   value: string | number;
@@ -53,6 +100,7 @@ class ProjectList {
   hostElement: HTMLDivElement;
   HTMLElement: HTMLElement;
   templateElement: HTMLTemplateElement;
+  assignedProjects: Project[];
 
   constructor(private type: 'active' | 'finished') {
     this.templateElement = document.getElementById(
@@ -66,8 +114,15 @@ class ProjectList {
 
     this.HTMLElement = importedHTMLNode.firstElementChild as HTMLElement;
     this.HTMLElement.id = `${this.type}-projects`;
+
+    projectState.addListener((projects: Project[]) => {
+      this.assignedProjects = projects;
+      this.renderProjects();
+    });
+
     this.attachNode();
     this.renderContent();
+    this.assignedProjects = [];
   }
 
   private attachNode() {
@@ -78,6 +133,15 @@ class ProjectList {
     const listId = `${this.type}-projects-list`;
     this.HTMLElement.querySelector('ul')!.id = listId;
     this.HTMLElement.querySelector('h2')!.textContent = `${this.type.toUpperCase()} PROJECTS`;
+  }
+
+  private renderProjects() {
+    const listElement = document.getElementById(`${this.type}-projects-list`);
+    for (const project of this.assignedProjects) {
+      const listItem = document.createElement('li');
+      listItem.textContent = project.title;
+      listElement?.appendChild(listItem);
+    }
   }
 }
 
@@ -121,11 +185,9 @@ class ProjectInput {
   private submitHandler(e: Event) {
     e.preventDefault();
     const userInput = this.gatherUserInput();
-    console.log(e.target);
-    console.log(userInput);
     if (userInput) {
       const [title, description, people] = userInput;
-      console.log(title, description, people);
+      projectState.addProject(title, description, people);
       this.clearInput();
     }
   }
@@ -182,5 +244,3 @@ class ProjectInput {
 const projectInput = new ProjectInput();
 const activeProjectList = new ProjectList('active');
 const finishedProjectList = new ProjectList('finished');
-
-console.log(projectInput);
