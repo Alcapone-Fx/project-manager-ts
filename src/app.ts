@@ -1,23 +1,31 @@
-interface Project{
-    id: string;
-    title: string;
-    description: string;
-    people: number;
+enum ProjectStatus {
+  Active,
+  Finished,
 }
 
-// Project State Management 
+class Project {
+  constructor(
+    public id: string,
+    public title: string,
+    public description: string,
+    public people: number,
+    public status: ProjectStatus
+  ) {}
+}
+
+type Listener = (projects: Project[]) => void;
+
+// Project State Management
 
 class ProjectState {
-  private listeners: Function[] = [];
+  private listeners: Listener[] = [];
   private projects: Project[] = [];
   private static instance: ProjectState;
 
-  private constructor() {
-
-  }
+  private constructor() {}
 
   static getInstance() {
-    if(this.instance) {
+    if (this.instance) {
       return this.instance;
     }
     this.instance = new ProjectState();
@@ -25,19 +33,20 @@ class ProjectState {
   }
 
   addProject(title: string, description: string, numOfPeople: number) {
-    const newProject: Project = {
-      id: Math.random().toString(),
+    const newProject = new Project(
+      Math.random().toString(),
       title,
       description,
-      people: numOfPeople
-    }
+      numOfPeople,
+      ProjectStatus.Active
+    );
     this.projects.push(newProject);
     for (const listener of this.listeners) {
       listener(this.projects.slice());
     }
   }
 
-  addListener(listenerFunction: Function) {
+  addListener(listenerFunction: Listener) {
     this.listeners.push(listenerFunction);
   }
 }
@@ -102,7 +111,7 @@ class ProjectList {
   templateElement: HTMLTemplateElement;
   assignedProjects: Project[];
 
-  constructor(private type: 'active' | 'finished') {
+  constructor(private type: "active" | "finished") {
     this.templateElement = document.getElementById(
       "project-list"
     )! as HTMLTemplateElement;
@@ -131,16 +140,23 @@ class ProjectList {
 
   private renderContent() {
     const listId = `${this.type}-projects-list`;
-    this.HTMLElement.querySelector('ul')!.id = listId;
-    this.HTMLElement.querySelector('h2')!.textContent = `${this.type.toUpperCase()} PROJECTS`;
+    this.HTMLElement.querySelector("ul")!.id = listId;
+    this.HTMLElement.querySelector(
+      "h2"
+    )!.textContent = `${this.type.toUpperCase()} PROJECTS`;
   }
 
   private renderProjects() {
     const listElement = document.getElementById(`${this.type}-projects-list`);
+    while (listElement?.firstChild) {
+      listElement.removeChild(listElement.firstChild);
+    }
     for (const project of this.assignedProjects) {
-      const listItem = document.createElement('li');
-      listItem.textContent = project.title;
-      listElement?.appendChild(listItem);
+      if(this.type.toUpperCase() === ProjectStatus[project.status].toUpperCase()) {
+        const listItem = document.createElement("li");
+        listItem.textContent = project.title;
+        listElement?.appendChild(listItem);
+      }
     }
   }
 }
@@ -242,5 +258,5 @@ class ProjectInput {
 }
 
 const projectInput = new ProjectInput();
-const activeProjectList = new ProjectList('active');
-const finishedProjectList = new ProjectList('finished');
+const activeProjectList = new ProjectList("active");
+const finishedProjectList = new ProjectList("finished");
