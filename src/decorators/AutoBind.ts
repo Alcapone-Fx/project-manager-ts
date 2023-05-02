@@ -1,4 +1,4 @@
-const AutoBind = (_: any, __: string, propDescriptor: PropertyDescriptor) => {
+export const AutoBind = (_: any, __: string, propDescriptor: PropertyDescriptor) => {
   const originalMethod = propDescriptor.value;
   const newDescriptor: PropertyDescriptor = {
     configurable: true,
@@ -13,5 +13,3 @@ const AutoBind = (_: any, __: string, propDescriptor: PropertyDescriptor) => {
 
   return newDescriptor;
 }
-
-export default AutoBind;
